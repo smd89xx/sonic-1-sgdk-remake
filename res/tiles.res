@@ -1,0 +1,1 @@
+IMAGE segaLogo "tiles/sega.png" BEST ALL
