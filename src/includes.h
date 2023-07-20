@@ -6,3 +6,5 @@
 #include "mdsseq.h"
 #include "palettes.h"
 #include "tiles.h"
+#include "spr.h"
+#include "game.h"

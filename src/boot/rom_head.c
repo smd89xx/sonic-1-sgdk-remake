@@ -10,8 +10,8 @@ const ROMHeader rom_header = {
     "SEGA MEGA DRIVE ",
 #endif
     "(C)RD23 2023.JUL",
-    "SONIC THE HEDGEHOG 1 SGDK REMAKE BUILD 20230718 ",
-    "SONIC THE HEDGEHOG 1 SGDK REMAKE BUILD 20230718 ",
+    "SONIC THE HEDGEHOG 1 SGDK REMAKE BUILD 20230720 ",
+    "SONIC THE HEDGEHOG 1 SGDK REMAKE BUILD 20230720 ",
     "GM 00000000-00",
     0x000,
     "JD              ",
@@ -28,6 +28,6 @@ const ROMHeader rom_header = {
     0x00200000,
     0x0020FFFF,
     "            ",
-    "Sonic 1 in C? not happening.            ",
+    "Sonic 1 in C? Not happening.            ",
     "JUE             "
 };
