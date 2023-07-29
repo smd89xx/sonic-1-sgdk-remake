@@ -2,30 +2,20 @@
 #define NUM_OPTS_LS 3
 
 enum regions {ntscJPN = 0x20, ntscUSA = 0xA0, palEUR = 0xE0, palJPN = 0x60};
-enum maxVals {lvlMax = 6, actMax = 3, livesMax = 99};
+enum maxVals {lvlMax = 7, actMax = 3, livesMax = 99};
 unsigned short* scroll;
 unsigned char* startTxtTimer;
 unsigned char* sndIndex;
 unsigned char* menuIndex;
-const unsigned char lsX = 5;
+const unsigned char lsX = 4;
 const unsigned char lsY = 14;
-const unsigned char sfxStart = 3;
+const unsigned char sfxStart = 4;
+const unsigned char palFadeTime = 30;
+const char lvlNames[lvlMax][17] = {"GREEN HILL ZONE","MARBLE ZONE","SPRING YARD ZONE","LABYRINTH ZONE","STAR LIGHT ZONE","SCRAP BRAIN ZONE","FINAL ZONE"};
 fix16* cycleTimer;
 Sprite* titleSonic;
 Sprite* hid[6];
 Sprite* startText;
-typedef struct
-{
-	unsigned char x;
-	unsigned char y;
-}Option;
-
-const Option lsOptions[NUM_OPTS_LS] = 
-{
-	{lsX,lsY},
-	{lsX+7,lsY},
-	{lsX+12,lsY},
-};
 
 static void joyEvent_LS(u16 joy, u16 changed, u16 state)
 {
@@ -33,205 +23,33 @@ static void joyEvent_LS(u16 joy, u16 changed, u16 state)
 	{
 		return;
 	}
-	if (changed & state & BUTTON_LEFT)
-	{
-		if (*menuIndex > 0)
-		{
-			*menuIndex -= 1;
-		}
-		else if (*menuIndex == 0)
-		{
-			*menuIndex = NUM_OPTS_LS-1;
-		}
-	}
-	else if (changed & state & BUTTON_RIGHT)
-	{
-		if (*menuIndex < NUM_OPTS_LS-1)
-		{
-			*menuIndex += 1;
-		}
-		else if (*menuIndex == NUM_OPTS_LS-1)
-		{
-			*menuIndex = 0;
-		}
-	}
-	if (changed & state & BUTTON_UP)
-	{
-		switch (*menuIndex)
-		{
-			case 0:
-			{
-				if (level[0] < lvlMax-1)
-				{
-					level[0]++;
-				}
-				else
-				{
-					level[0] = 0;
-				}
-				break;
-			}
-			case 1:
-			{
-				if (level[1] < actMax-1)
-				{
-					level[1]++;
-				}
-				else
-				{
-					level[1] = 0;
-				}
-				break;
-			}
-			case 2:
-			{
-				*sndIndex += 1;
-				break;
-			}
-			default:
-			{
-				break;
-			}
-		}
-	}
-	else if (changed & state & BUTTON_DOWN)
-	{
-		switch (*menuIndex)
-		{
-			case 0:
-			{
-				if (level[0] > 0)
-				{
-					level[0]--;
-				}
-				else
-				{
-					level[0] = lvlMax-1;
-				}
-				break;
-			}
-			case 1:
-			{
-				if (level[1] > 0)
-				{
-					level[1]--;
-				}
-				else
-				{
-					level[1] = actMax-1;
-				}
-				break;
-			}
-			case 2:
-			{
-				*sndIndex -= 1;
-				break;
-			}
-			default:
-			{
-				break;
-			}
-		}
-	}
-	
-	if (changed & state & BUTTON_START)
-	{
-		if (*menuIndex == NUM_OPTS_LS-1)
-		{
-			if (*sndIndex < sfxStart)
-			{
-				MDS_request(MDS_BGM,*sndIndex);
-			}
-			else
-			{
-				MDS_request(MDS_SE1,*sndIndex);
-			}
-		}
-		else
-		{
-			unsigned char timer = 30;
-			PAL_fadeOutAll(30,TRUE);
-			MDS_fade(0x7F,4,TRUE);
-			while(1)
-			{
-				timer--;
-				MDS_update();
-				SPR_update();
-				SYS_doVBlankProcess();
-				if (timer == 0)
-				{
-					gameInit();
-				}
-			}
-		}
-	}
 }
 
 static void lvlSelect()
 {
 	short indEmblem = TILE_USER_INDEX;
 	unsigned short basetileEmblem = TILE_ATTR_FULL(PAL0,TRUE,FALSE,FALSE,indEmblem);
-	VDP_clearPlane(BG_B,TRUE);
-	VDP_clearPlane(BG_A,TRUE);
-	VDP_setTextPriority(TRUE);
+	unsigned short basetileText = TILE_ATTR(PAL2,TRUE,FALSE,FALSE);
+	unsigned short basetileTextHot = TILE_ATTR(PAL3,TRUE,FALSE,FALSE);
 	VDP_loadFont(&lsFont,DMA);
+	VDP_clearPlane(BG_B,TRUE);
+	VDP_clearTileMapRect(BG_A,0,0,40,25);
+	VDP_setTextPriority(TRUE);
+	VDP_setTextPalette(PAL2);
 	VDP_setScrollingMode(HSCROLL_PLANE,VSCROLL_PLANE);
 	VDP_setHorizontalScroll(BG_B,0);
 	VDP_drawImageEx(BG_B,&emblem,basetileEmblem,4,5,FALSE,TRUE);
-	PAL_setColors(0,lvlSelectPalette,64,DMA);
-	char lvlStr[2] = "0";
-	char actStr[2] = "0";
-	char sndStr[4] = "00";
-	VDP_setTextPalette(PAL2);
-	VDP_drawText("LEVEL:",lsX,lsY);
-	VDP_drawText("ACT:",lsX+9,lsY);
-	VDP_drawText("SOUND TEST:",lsX+16,lsY);
-	unsigned short basetile[NUM_OPTS_LS] = {TILE_ATTR(PAL3,TRUE,FALSE,FALSE),TILE_ATTR(PAL2,TRUE,FALSE,FALSE),TILE_ATTR(PAL2,TRUE,FALSE,FALSE)};
+	PAL_fadeInAll(lvlSelectPalette,palFadeTime,TRUE);
 	sndIndex = MEM_alloc(sizeof(char));
 	menuIndex = MEM_alloc(sizeof(char));
-	*sndIndex = 0;
+	*sndIndex = BGM_MUS_S2BLVS;
 	*menuIndex = 0;
-	MDS_request(MDS_BGM,BGM_MUS_CLI2);
+	MDS_request(MDS_BGM,BGM_MUS_S2BLVS);
 	JOY_setEventHandler(joyEvent_LS);
 	while (1)
 	{
-		SPR_update();
-		MDS_update();
 		SYS_doVBlankProcess();
-		uintToStr(level[0],lvlStr,1);
-		VDP_drawTextEx(BG_A,lvlStr,basetile[0],lsX+7,lsY,DMA);
-		uintToStr(level[1],actStr,1);
-		VDP_drawTextEx(BG_A,actStr,basetile[1],lsX+14,lsY,DMA);
-		uintToStr(*sndIndex,sndStr,2);
-		VDP_drawTextEx(BG_A,sndStr,basetile[2],lsX+28,lsY,DMA);
-		switch (*menuIndex)
-		{
-		case 0:
-		{
-			basetile[0] = TILE_ATTR(PAL3,TRUE,FALSE,FALSE);
-			basetile[1] = TILE_ATTR(PAL2,TRUE,FALSE,FALSE);
-			basetile[2] = TILE_ATTR(PAL2,TRUE,FALSE,FALSE);
-			break;
-		}
-		case 1:
-		{
-			basetile[0] = TILE_ATTR(PAL2,TRUE,FALSE,FALSE);
-			basetile[1] = TILE_ATTR(PAL3,TRUE,FALSE,FALSE);
-			basetile[2] = TILE_ATTR(PAL2,TRUE,FALSE,FALSE);
-			break;
-		}
-		case 2:
-		{
-			basetile[0] = TILE_ATTR(PAL2,TRUE,FALSE,FALSE);
-			basetile[1] = TILE_ATTR(PAL2,TRUE,FALSE,FALSE);
-			basetile[2] = TILE_ATTR(PAL3,TRUE,FALSE,FALSE);
-			break;
-		}
-		default:
-		{
-			break;
-		}
-		}
+		MDS_update();
 	}
 }
 
@@ -243,8 +61,8 @@ static void joyEvent_Title(u16 joy, u16 changed, u16 state)
 	}
 	if (changed & state & BUTTON_START)
 	{
-		unsigned char timer = 30;
-		PAL_fadeOutAll(30,TRUE);
+		unsigned char timer = palFadeTime;
+		PAL_fadeOutAll(palFadeTime,TRUE);
 		MDS_fade(0x7F,4,TRUE);
 		while (1)
 		{
@@ -252,7 +70,7 @@ static void joyEvent_Title(u16 joy, u16 changed, u16 state)
 			MDS_update();
 			SPR_update();
 			SYS_doVBlankProcess();
-			if (timer == 0)
+			if (timer == 0 && (state & BUTTON_A))
 			{
 				MEM_free(scroll);
 				MEM_free(cycleTimer);
@@ -260,6 +78,15 @@ static void joyEvent_Title(u16 joy, u16 changed, u16 state)
 				SYS_setVIntCallback(NULL);
 				PAL_interruptFade();
 				lvlSelect();
+			}
+			else if (timer == 0 && !(state & BUTTON_A))
+			{
+				MEM_free(scroll);
+				MEM_free(cycleTimer);
+				MEM_free(startTxtTimer);
+				SYS_setVIntCallback(NULL);
+				PAL_interruptFade();
+				gameInit();
 			}
 		}
 	}
@@ -315,14 +142,14 @@ static void title()
 	for (unsigned char i = 0; i < 6; i++)
 	{
 		hid[i] = SPR_addSprite(&spriteHider,pixelToTile(12+(i << 2)),pixelToTile(14)-1,basetileSpr);
-		SPR_setDepth(hid[i],-0x8000);
+		SPR_setDepth(hid[i],SPR_MIN_DEPTH);
 		SPR_setPriority(hid[i],FALSE);
 	}
 	fix16 sonicYPos = FIX16(72);
 	unsigned char loopTimer = 21;
 	bool startAnim = FALSE;
 	fix16 sonicAnim = FIX16(0);
-	unsigned char fadeTimer = 30;
+	unsigned char fadeTimer = palFadeTime;
 	VDP_setScrollingMode(HSCROLL_TILE,VSCROLL_PLANE);
 	SPR_setPosition(hid[4],pixelToTile(18),139);
 	SPR_setPosition(hid[5],pixelToTile(21)-3,129);
@@ -330,13 +157,16 @@ static void title()
 	VDP_drawImageEx(BG_A,&emblem,basetileEmblem,4,5,FALSE,TRUE);
 	VDP_loadTileSet(&ghzBG_TS,indBG,DMA);
 	lvlBG = MAP_create(&ghzBG_MAP,BG_B,basetileBG);
+	MEM_free(lvlBG);
 	MAP_scrollTo(lvlBG,0,0);
+	VDP_drawText("}SEGA 1991",29,25);
+	VDP_drawText("}THEWINDOWSPRO98 2023",18,26);
 	scroll = MEM_alloc(sizeof(short));
 	cycleTimer = MEM_alloc(sizeof(fix16));
 	startTxtTimer = MEM_alloc(sizeof(char));
 	*startTxtTimer = 60;
 	SYS_setVIntCallback(titleVInt);
-	PAL_fadeInAll(titlePalette,30,TRUE);
+	PAL_fadeInAll(titlePalette,palFadeTime,TRUE);
 	JOY_setEventHandler(joyEvent_Title);
 	MDS_request(MDS_BGM,BGM_MUS_CLI2);
 	while(!startAnim)
@@ -396,19 +226,19 @@ static void title()
 static void teamCredits()
 {
 	VDP_clearPlane(BG_A,TRUE);
-	PAL_fadeInPalette(PAL1,sonicPalette,30,TRUE);
+	PAL_fadeInPalette(PAL1,sonicPalette,palFadeTime,TRUE);
 	short ind = TILE_USER_INDEX;
 	unsigned short basetileVRAM = TILE_ATTR_FULL(PAL1,FALSE,FALSE,FALSE,ind);
 	VDP_drawImageEx(BG_A,&presentingLogo,basetileVRAM,7,12,FALSE,TRUE);
-	unsigned char timer = 130;
+	unsigned char timer = 100 + palFadeTime;
 	while (1)
 	{
 		timer--;
 		MDS_update();
 		SYS_doVBlankProcess();
-		if (timer == 30)
+		if (timer == palFadeTime)
 		{
-			PAL_fadeOutPalette(PAL1,30,TRUE);
+			PAL_fadeOutPalette(PAL1,palFadeTime,TRUE);
 		}
 		else if (timer == 0)
 		{
@@ -422,8 +252,8 @@ static void segaScreen()
 {
 	short ind = TILE_USER_INDEX;
 	unsigned short basetileVRAM = TILE_ATTR_FULL(PAL0,FALSE,FALSE,FALSE,ind);
-	unsigned char timer = 156;
-	PAL_fadeInPalette(PAL0,segaPalette,30,TRUE);
+	unsigned char timer = 126 + palFadeTime;
+	PAL_fadeInPalette(PAL0,segaPalette,palFadeTime,TRUE);
 	VDP_drawImageEx(BG_A,&segaLogo,basetileVRAM,13,12,FALSE,TRUE);
 	while (1)
 	{
@@ -434,9 +264,9 @@ static void segaScreen()
 		{
 			MDS_request(MDS_BGM,BGM_SFX_SEGA);
 		}
-		else if (timer == 30)
+		else if (timer == palFadeTime)
 		{
-			PAL_fadeOutPalette(PAL0,30,TRUE);
+			PAL_fadeOutPalette(PAL0,palFadeTime,TRUE);
 		}
 		else if (timer == 0)
 		{
@@ -447,12 +277,13 @@ static void segaScreen()
 
 int main(bool resetType)
 {
-	Z80_unloadDriver();
-	MDS_init(mdsseqdat,mdspcmdat);
 	for (unsigned char i = 0; i < 4; i++)
 	{
 		PAL_setPalette(i,palette_black,DMA);
 	}
+	Z80_unloadDriver();
+	VDP_loadFont(&titleFont,DMA);
+	MDS_init(mdsseqdat,mdspcmdat);
 	segaScreen();
 	while(TRUE)
 	{

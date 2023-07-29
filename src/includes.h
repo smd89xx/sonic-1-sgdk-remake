@@ -7,4 +7,6 @@
 #include "palettes.h"
 #include "tiles.h"
 #include "spr.h"
+#include "bsod.h"
+#include "main.h"
 #include "game.h"
