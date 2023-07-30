@@ -4,7 +4,7 @@ An offensively bad Sonic 1 remake in SGDK. I sincerely apologize.
 ## How 2 build
 
 ### Requirements
- - MARSDEV (Linux)/SGDK (Windows)
+ - MARSDEV (Linux & macOS)/SGDK (Windows)
  - ctrmml (for compiling music data)
     - Must also define its path in an environment variable called "CTRMML_DIR"
 
