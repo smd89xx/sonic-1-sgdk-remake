@@ -26,47 +26,15 @@ static void setLevelPalette(const unsigned short* palette)
     PAL_fadeIn(0,47,palette,palFadeTime,TRUE);
 }
 
-static void drawLevel()
-{
-    player_x = 0;
-    switch (level[0])
-    {
-    case 0:
-    {
-        short indBG = TILE_USER_INDEX;
-        short indFG = indBG;
-        lvlVRAMIndex = ghzBG_TS.numTile;
-        unsigned short basetileBG = TILE_ATTR_FULL(PAL0,FALSE,FALSE,FALSE,indBG);
-        unsigned short basetileFG = TILE_ATTR_FULL(PAL0,FALSE,FALSE,FALSE,indFG);
-        cycleTimer = MEM_alloc(sizeof(fix16));
-        VDP_loadTileSet(&ghzBG_TS,indBG,DMA);
-        setLevelPalette(ghzPalette);
-        lvlBG = MAP_create(&ghzBG_MAP,BG_B,basetileBG);
-        MAP_scrollTo(lvlBG,0,0);
-        MEM_free(lvlBG);
-        switch (level[1])
-        {
-        case 0:
-        {
-            break;
-        }
-        default:
-            break;
-        }
-        break;
-    }
-    default:
-    {
-        break;
-    }
-    }
-}
-
 static void joyEvent_Game(u16 joy, u16 changed, u16 state)
 {
     if (joy != JOY_1)
     {
         return;
+    }
+    if (changed & state & BUTTON_START)
+    {
+        killExec(featureNotFound);
     }
 }
 
@@ -102,10 +70,6 @@ static void updateHUD()
 static void spawnHUD()
 {
     unsigned short basetileHUD_Image = TILE_ATTR_FULL(PAL3,TRUE,FALSE,FALSE,lvlVRAMIndex+TILE_USER_INDEX);
-    VDP_loadFont(&gameFont,DMA);
-    VDP_setWindowVPos(FALSE,3);
-    VDP_setTextPalette(PAL3);
-	VDP_setTextPlane(WINDOW);
     VDP_drawText("SCORE",0,0);
     VDP_drawText("TIME",0,1);
     VDP_drawText("RINGS",0,2);
@@ -115,9 +79,21 @@ static void spawnHUD()
 
 static void initLevel()
 {
-    drawLevel();
+    switch (level[0])
+    {
+        case 0:
+        {
+            setLevelPalette(ghzPalette);
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
     spawnPlayer();
     spawnHUD();
+    JOY_setEventHandler(joyEvent_Game);
     while (1)
     {
         SYS_doVBlankProcess();
@@ -137,14 +113,38 @@ void gameInit()
     VDP_clearPlane(BG_A,TRUE);
     VDP_clearPlane(BG_B,TRUE);
     SPR_reset();
+    VDP_setWindowVPos(FALSE,3);
+    VDP_setTextPalette(PAL3);
+	VDP_setTextPlane(WINDOW);
+    VDP_loadFont(&gameFont,DMA);
     SYS_setVIntCallback(NULL);
     PAL_interruptFade();
     PAL_setPalette(PAL3,sonicPalette,DMA);
+    JOY_setEventHandler(NULL);
     switch (level[0])
     {
     case 0:
     {
+        short indBG = TILE_USER_INDEX;
+        short indFG = indBG;
+        VDP_loadTileSet(&ghzBG_TS,indBG,DMA);
+        lvlVRAMIndex = ghzBG_TS.numTile;
+        unsigned short basetileBG = TILE_ATTR_FULL(PAL0,FALSE,FALSE,FALSE,indBG);
+        unsigned short basetileFG = TILE_ATTR_FULL(PAL0,FALSE,FALSE,FALSE,indFG);
+        cycleTimer = MEM_alloc(sizeof(fix16));
+        lvlBG = MAP_create(&ghzBG_MAP,BG_B,basetileBG);
+        MAP_scrollTo(lvlBG,0,0);
+        MEM_free(lvlBG);
         MDS_request(MDS_BGM,BGM_MUS_CLI2);
+        switch (level[1])
+        {
+        case 0:
+        {
+            break;
+        }
+        default:
+            break;
+        }
         break;
     }    
     default:
@@ -153,7 +153,6 @@ void gameInit()
         break;
     }
     }
-    JOY_setEventHandler(joyEvent_Game);
     while(1)
     {
         timer--;

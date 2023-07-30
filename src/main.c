@@ -1,21 +1,96 @@
 #include "includes.h"
-#define NUM_OPTS_LS 3
+#define NUM_OPTS_LS 27
 
 enum regions {ntscJPN = 0x20, ntscUSA = 0xA0, palEUR = 0xE0, palJPN = 0x60};
 enum maxVals {lvlMax = 7, actMax = 3, livesMax = 99};
+
+typedef struct
+{
+	unsigned char x;
+	unsigned char y;
+	char* label;
+}Option;
+
 unsigned short* scroll;
 unsigned char* startTxtTimer;
 unsigned char* sndIndex;
 unsigned char* menuIndex;
-const unsigned char lsX = 4;
-const unsigned char lsY = 14;
+const unsigned char lsX = 3;
+const unsigned char lsY = 4;
 const unsigned char sfxStart = 4;
 const unsigned char palFadeTime = 30;
-const char lvlNames[lvlMax][17] = {"GREEN HILL ZONE","MARBLE ZONE","SPRING YARD ZONE","LABYRINTH ZONE","STAR LIGHT ZONE","SCRAP BRAIN ZONE","FINAL ZONE"};
+const unsigned char mdsFadePeak = 0x7F;
+const unsigned char mdsFadeDecay = 4;
 fix16* cycleTimer;
 Sprite* titleSonic;
 Sprite* hid[6];
 Sprite* startText;
+const Option lsOptions[NUM_OPTS_LS] =
+{
+	{lsX, lsY, "GREEN HILL    1"},
+	{lsX, lsY+1, "GREEN HILL    2"},
+	{lsX, lsY+2, "GREEN HILL    3"},
+	{lsX, lsY+4, "MARBLE        1"},
+	{lsX, lsY+5, "MARBLE        2"},
+	{lsX, lsY+6, "MARBLE        3"},
+	{lsX, lsY+8, "SPRING YARD   1"},
+	{lsX, lsY+9, "SPRING YARD   2"},
+	{lsX, lsY+10, "SPRING YARD   3"},
+	{lsX, lsY+12, "LABYRINTH     1"},
+	{lsX, lsY+13, "LABYRINTH     2"},
+	{lsX, lsY+14, "LABYRINTH     3"},
+	{lsX, lsY+16, "STAR LIGHT    1"},
+	{lsX, lsY+17, "STAR LIGHT    2"},
+	{lsX, lsY+18, "STAR LIGHT    3"},
+	{lsX+19, lsY, "SCRAP BRAIN   1"},
+	{lsX+19, lsY+1, "SCRAP BRAIN   2"},
+	{lsX+19, lsY+2, "SCRAP BRAIN   3"},
+	{lsX+19, lsY+3, "SCRAP BRAIN   4"},
+	{lsX+19, lsY+5, "SPECIAL STAGE 1"},
+	{lsX+19, lsY+6, "SPECIAL STAGE 2"},
+	{lsX+19, lsY+7, "SPECIAL STAGE 3"},
+	{lsX+19, lsY+8, "SPECIAL STAGE 4"},
+	{lsX+19, lsY+9, "SPECIAL STAGE 5"},
+	{lsX+19, lsY+10, "SPECIAL STAGE 6"},
+	{lsX+19, lsY+11, "SPECIAL STAGE 7"},
+	{lsX+19, lsY+18, "SOUND TEST {  {"},
+};
+
+static short pixelToTile(short pixel)
+{
+	return pixel << 3;
+}
+
+static void moveCursor(bool direction)
+{
+	unsigned short basetileText = TILE_ATTR(PAL0,FALSE,FALSE,FALSE);
+	unsigned short basetileTextHot = TILE_ATTR(PAL1,FALSE,FALSE,FALSE);
+	if (*menuIndex == 0 && direction)
+	{
+		VDP_drawTextEx(BG_A,lsOptions[*menuIndex].label,basetileText,lsOptions[*menuIndex].x,lsOptions[*menuIndex].y,DMA);
+		*menuIndex = NUM_OPTS_LS;
+	}
+	else if (*menuIndex >= NUM_OPTS_LS-1 && !direction)
+	{
+		VDP_drawTextEx(BG_A,lsOptions[*menuIndex].label,basetileText,lsOptions[*menuIndex].x,lsOptions[*menuIndex].y,DMA);
+		*menuIndex = 0;
+		VDP_drawTextEx(BG_A,lsOptions[*menuIndex].label,basetileTextHot,lsOptions[*menuIndex].x,lsOptions[*menuIndex].y,DMA);
+		return;
+	}
+	if (*menuIndex != 0 && direction)
+	{
+		*menuIndex -= 1;
+		VDP_drawTextEx(BG_A,lsOptions[*menuIndex].label,basetileTextHot,lsOptions[*menuIndex].x,lsOptions[*menuIndex].y,DMA);
+		VDP_drawTextEx(BG_A,lsOptions[*menuIndex+1].label,basetileText,lsOptions[*menuIndex+1].x,lsOptions[*menuIndex+1].y,DMA);
+	}
+	else if (*menuIndex < NUM_OPTS_LS && !direction)
+	{
+		*menuIndex += 1;
+		VDP_drawTextEx(BG_A,lsOptions[*menuIndex].label,basetileTextHot,lsOptions[*menuIndex].x,lsOptions[*menuIndex].y,DMA);
+		VDP_drawTextEx(BG_A,lsOptions[*menuIndex-1].label,basetileText,lsOptions[*menuIndex-1].x,lsOptions[*menuIndex-1].y,DMA);
+	}
+	VDP_clearTileMapRect(BG_A,0,0,40,1);
+}
 
 static void joyEvent_LS(u16 joy, u16 changed, u16 state)
 {
@@ -23,22 +98,66 @@ static void joyEvent_LS(u16 joy, u16 changed, u16 state)
 	{
 		return;
 	}
+	if (changed & state & BUTTON_UP)
+	{
+		MDS_request(MDS_SE1,BGM_SFX_S1SELECT);
+		moveCursor(TRUE);
+	}
+	else if (changed & state & BUTTON_DOWN)
+	{
+		MDS_request(MDS_SE1,BGM_SFX_S1SELECT);
+		moveCursor(FALSE);
+	}
+	if (changed & state & BUTTON_START)
+	{
+		unsigned char fadeTimer = palFadeTime;
+		PAL_fadeOutAll(palFadeTime,TRUE);
+		MDS_fade(mdsFadePeak,mdsFadeDecay,TRUE);
+		while (1)
+		{
+			fadeTimer--;
+			SYS_doVBlankProcess();
+			MDS_update();
+			if (fadeTimer == 0)
+			{
+				PAL_interruptFade();
+				switch (*menuIndex)
+				{
+					case 0:
+					{
+						level[0] = 0;
+						level[1] = 0;
+						gameInit();
+						break;
+					}
+					default:
+					{
+						killExec(featureNotFound);
+						break;
+					}
+				}
+			}
+		}
+	}
 }
 
 static void lvlSelect()
 {
 	short indEmblem = TILE_USER_INDEX;
-	unsigned short basetileEmblem = TILE_ATTR_FULL(PAL0,TRUE,FALSE,FALSE,indEmblem);
-	unsigned short basetileText = TILE_ATTR(PAL2,TRUE,FALSE,FALSE);
-	unsigned short basetileTextHot = TILE_ATTR(PAL3,TRUE,FALSE,FALSE);
-	VDP_loadFont(&lsFont,DMA);
+	unsigned short basetileEmblem = TILE_ATTR_FULL(PAL0,FALSE,FALSE,FALSE,indEmblem);
+	unsigned short basetileTextHot = TILE_ATTR(PAL1,FALSE,FALSE,FALSE);
 	VDP_clearPlane(BG_B,TRUE);
-	VDP_clearTileMapRect(BG_A,0,0,40,25);
-	VDP_setTextPriority(TRUE);
-	VDP_setTextPalette(PAL2);
+	VDP_clearPlane(BG_A,TRUE);
+	SPR_reset();
 	VDP_setScrollingMode(HSCROLL_PLANE,VSCROLL_PLANE);
 	VDP_setHorizontalScroll(BG_B,0);
-	VDP_drawImageEx(BG_B,&emblem,basetileEmblem,4,5,FALSE,TRUE);
+	VDP_drawImageEx(BG_B,&lsBG,basetileEmblem,0,0,FALSE,TRUE);
+	for (unsigned char i = 0; i < NUM_OPTS_LS; i++)
+	{
+		Option o = lsOptions[i];
+		VDP_drawText(o.label,o.x,o.y);
+	}
+	VDP_drawTextEx(BG_A,lsOptions[0].label,basetileTextHot,lsOptions[0].x,lsOptions[0].y,DMA);
 	PAL_fadeInAll(lvlSelectPalette,palFadeTime,TRUE);
 	sndIndex = MEM_alloc(sizeof(char));
 	menuIndex = MEM_alloc(sizeof(char));
@@ -49,6 +168,7 @@ static void lvlSelect()
 	while (1)
 	{
 		SYS_doVBlankProcess();
+		SPR_update();
 		MDS_update();
 	}
 }
@@ -63,7 +183,7 @@ static void joyEvent_Title(u16 joy, u16 changed, u16 state)
 	{
 		unsigned char timer = palFadeTime;
 		PAL_fadeOutAll(palFadeTime,TRUE);
-		MDS_fade(0x7F,4,TRUE);
+		MDS_fade(mdsFadePeak,mdsFadeDecay,TRUE);
 		while (1)
 		{
 			timer--;
@@ -90,11 +210,6 @@ static void joyEvent_Title(u16 joy, u16 changed, u16 state)
 			}
 		}
 	}
-}
-
-static short pixelToTile(short pixel)
-{
-	return pixel << 3;
 }
 
 static void titleVInt()
