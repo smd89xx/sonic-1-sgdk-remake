@@ -104,35 +104,34 @@ static void paletteCycle_GHZ()
 
 static void updateHUD()
 {
-    char scoreStr[8] = "0000000";
-    char ringsStr[4] = "000";
+    char scoreStr[11] = "0000000000";
+    char ringsStr[6] = "00000";
     char secondStr[3] = "00";
     char minuteStr[2] = "0";
-    char livesStr[3] = "00";
+    char livesStr[4] = "000";
     char framesStr[3] = "00";
-    uintToStr(score,scoreStr,7);
+    uintToStr(score,scoreStr,10);
     VDP_drawText(scoreStr,6,0);
-    uintToStr(rings,ringsStr,3);
-    VDP_drawText(ringsStr,10,2);
+    uintToStr(rings,ringsStr,5);
+    VDP_drawText(ringsStr,11,2);
     uintToStr(gameTimer[0],minuteStr,1);
-    VDP_drawText(minuteStr,6,1);
+    VDP_drawText(minuteStr,9,1);
     uintToStr(gameTimer[1],secondStr,2);
-    VDP_drawText(secondStr,8,1);
-    uintToStr(lives,livesStr,2);
-    VDP_drawText(livesStr,38,1);
+    VDP_drawText(secondStr,11,1);
+    uintToStr(lives,livesStr,3);
+    VDP_drawText(livesStr,13,3);
     uintToStr(gameTimer[2],framesStr,2);
-    VDP_drawText(framesStr,11,1);
+    VDP_drawText(framesStr,14,1);
 }
 
 static void spawnHUD()
 {
-    u16 basetileHUD_Image = TILE_ATTR_FULL(PAL3,TRUE,FALSE,FALSE,lvlVRAMIndex+TILE_USER_INDEX);
     VDP_drawText("SCORE",0,0);
     VDP_drawText("TIME",0,1);
     VDP_drawText("RINGS",0,2);
-    VDP_drawText(":",7,1);
+    VDP_drawText("LIVES",0,3);
+    VDP_drawText(":",13,1);
     VDP_drawText(":",10,1);
-    VDP_drawImageEx(WINDOW,&livesHUD,basetileHUD_Image,34,0,FALSE,TRUE);
 }
 
 static void updateTimer()
@@ -162,7 +161,7 @@ static void updateTimer()
         gameTimer[0] = 9;
         gameTimer[1] = 59;
         gameTimer[2] = maxFrame-1;
-        VDP_drawText(":",7,1);
+        VDP_drawText(":",10,1);
     }
 }
 
@@ -207,7 +206,7 @@ void gameInit()
     VDP_clearPlane(BG_A,TRUE);
     VDP_clearPlane(BG_B,TRUE);
     SPR_reset();
-    VDP_setWindowVPos(FALSE,3);
+    VDP_setWindowVPos(FALSE,4);
     VDP_setTextPalette(PAL3);
 	VDP_setTextPlane(WINDOW);
     VDP_loadFont(&gameFont,DMA);
