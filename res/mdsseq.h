@@ -1,7 +1,10 @@
 #define BGM_MIN 1
 #define BGM_MUS_CLI2 1
-#define BGM_MUS_S2BLVS 2
-#define BGM_MUS_S3CLEAR 3
-#define BGM_SFX_S1SELECT 4
-#define BGM_SFX_SEGA 5
-#define BGM_MAX 5
+#define BGM_MUS_S1TITLE 2
+#define BGM_MUS_S2BLVS 3
+#define BGM_MUS_S3CLEAR 4
+#define BGM_SFX_S1RING 5
+#define BGM_SFX_S1SELECT 6
+#define BGM_SFX_SCD1UP 7
+#define BGM_SFX_SEGA 8
+#define BGM_MAX 8

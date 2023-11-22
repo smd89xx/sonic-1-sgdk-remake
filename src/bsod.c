@@ -1,7 +1,8 @@
 #include "includes.h"
 
-const char stopStrings[4][41] = {"ERROR_USER_GENERIC","ERROR_VALUE_OUT_OF_RANGE","ERROR_XGM_Z80_OVERLOAD","ERROR_FUNCTION_UNIMPLEMENTED"};
+const string stopStrings[4] = {"ERROR_USER_GENERIC","ERROR_VALUE_OUT_OF_RANGE","ERROR_XGM_Z80_OVERLOAD","ERROR_FUNCTION_UNIMPLEMENTED"};
 u32* stopcode_public;
+const string bsodStrings[14] = {"A problem has been detected and the","current process has ended to prevent","damage to your console.","If this is the first time you've seen","this screen, reset your console. If you","see this screen again, press the","START button. This will make an attempt","to fix any problems you are having.","If problems continue, contact the","developer for a potential fix, if any","can be provided, or erase all save data","and start over. A backup is recommended.","Technical Information:","***** STOP: 0x"};
 static void joyEvent_BSOD(u16 joy, u16 changed, u16 state)
 {
     u16 basetile = TILE_ATTR(PAL1,FALSE,FALSE,FALSE);
@@ -26,10 +27,10 @@ void killExec(u32 stopcode)
     VDP_clearPlane(BG_A,TRUE);
     VDP_clearPlane(BG_B,TRUE);
     VDP_setWindowVPos(FALSE,0);
+    VDP_setScreenHeight240();
     SPR_end();
     PAL_interruptFade();
     u16 basetile = TILE_ATTR(PAL1,FALSE,FALSE,FALSE);
-    char bsodStrings[14][41] = {"A problem has been detected and the","current process has ended to prevent","damage to your console.","If this is the first time you've seen","this screen, reset your console. If you","see this screen again, press the","START button. This will make an attempt","to fix any problems you are having.","If problems continue, contact the","developer for a potential fix, if any","can be provided, or erase all save data","and start over. A backup is recommended.","Technical Information:","***** STOP: 0x"};
     u8 i = 0;
     for (i; i < 4; i++)
     {
@@ -80,12 +81,10 @@ void killExec(u32 stopcode)
     VDP_drawTextEx(BG_A,"** CONTENT: 0x",basetile,0,20,DMA);
     PAL_setColor(0,0x0800);
     PAL_setPalette(PAL1,sonicPalette,DMA);
-    MDS_fade(mdsFadePeak,mdsFadeDecay,TRUE);
-    stopcode_public = MEM_alloc(sizeof(u32));
+    stopcode_public = &stopcode;
     JOY_setEventHandler(joyEvent_BSOD);
     while (1)
     {
-        MDS_update();
         SYS_doVBlankProcess();
     }
 }
