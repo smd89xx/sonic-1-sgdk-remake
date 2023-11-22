@@ -197,7 +197,7 @@ static void joyEvent_LS(u16 joy, u16 changed, u16 state)
 void lvlSelect()
 {
 	s16 indEmblem = TILE_USER_INDEX;
-	u16 basetileEmblem = TILE_ATTR_FULL(PAL0,FALSE,FALSE,FALSE,indEmblem);
+	u16 basetileEmblem = TILE_ATTR_FULL(PAL2,FALSE,FALSE,FALSE,indEmblem);
 	u16 basetileTextHot = TILE_ATTR(PAL1,FALSE,FALSE,FALSE);
 	VDP_clearPlane(BG_B,TRUE);
 	VDP_clearPlane(BG_A,TRUE);
