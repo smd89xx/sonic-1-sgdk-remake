@@ -1,7 +1,7 @@
 #pragma once
 
 #define true 1
-#define false 0;
+#define false 0
 
 extern bool isNTSC;
 extern const unsigned char palFadeTime;

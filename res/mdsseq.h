@@ -7,4 +7,5 @@
 #define BGM_SFX_S1SELECT 6
 #define BGM_SFX_SCD1UP 7
 #define BGM_SFX_SEGA 8
-#define BGM_MAX 8
+#define BGM_SFX_SMWJUMP 9
+#define BGM_MAX 9

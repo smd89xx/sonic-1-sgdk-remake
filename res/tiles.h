@@ -11,5 +11,7 @@ extern const TileSet gameFont;
 extern const TileSet bsodFont;
 extern const TileSet titleFont;
 extern const Image lsBG;
+extern const TileSet ghzFG_Act1TS;
+extern const MapDefinition ghzFG_Act1Map;
 
 #endif // _RES_TILES_H_

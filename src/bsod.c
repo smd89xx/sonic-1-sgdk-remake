@@ -36,8 +36,6 @@ void killExec(u32 stopcode)
     {
         PAL_setPalette(i,palette_black,DMA);
     }
-    u32 errPtr;
-    u32 errVal;
     for (i = 0; i < 3; i++)
     {
         VDP_drawTextEx(BG_A,bsodStrings[i],basetile,0,i,DMA);
@@ -55,30 +53,9 @@ void killExec(u32 stopcode)
     {
         VDP_drawTextEx(BG_A,bsodStrings[i],basetile,0,i+5,DMA);
     }
-    switch (stopcode)
-    {
-    case 1:
-    {
-        errPtr = &level;
-        errVal = (level[0] << 8) + level[1];
-        break;
-    }    
-    default:
-    {
-        errPtr = NULL;
-        errVal = NULL;
-        break;
-    }
-    }
-    char scStr[9] = "00000000";
+    string scStr = MEM_alloc(9*sizeof(u8));
     intToHex(stopcode,scStr,8);
     VDP_drawTextEx(BG_A,scStr,basetile,14,18,DMA);
-    intToHex(errPtr,scStr,8);
-    VDP_drawTextEx(BG_A,scStr,basetile,14,19,DMA);
-    intToHex(errVal,scStr,8);
-    VDP_drawTextEx(BG_A,scStr,basetile,14,20,DMA);
-    VDP_drawTextEx(BG_A,"** ADDRESS: 0x",basetile,0,19,DMA);
-    VDP_drawTextEx(BG_A,"** CONTENT: 0x",basetile,0,20,DMA);
     PAL_setColor(0,0x0800);
     PAL_setPalette(PAL1,sonicPalette,DMA);
     stopcode_public = &stopcode;

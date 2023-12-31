@@ -8,3 +8,5 @@ TILESET gameFont "tiles/font_game.png" BEST NONE
 TILESET bsodFont "tiles/font_lc.png" BEST NONE
 TILESET titleFont "tiles/font_title.png" BEST NONE
 IMAGE lsBG "tiles/levelSelect.png" BEST ALL
+TILESET ghzFG_Act1TS "tiles/ghz1_fg.png" BEST ALL 
+MAP ghzFG_Act1Map "tiles/ghz1_fg.png" ghzFG_Act1TS BEST 0

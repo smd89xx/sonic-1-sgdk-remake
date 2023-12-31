@@ -1,26 +1,90 @@
 #include "includes.h"
 
-enum maxVals {ringMax = 999, livesMax = 99, scoreMax = 9999990};
+enum playerAnimIndexes
+{
+    animIdle,
+    animWaitStart,
+    animWaitLoop,
+    animLookUp,
+    animCrouch,
+    animSpring,
+    animWalkGround,
+    animWalk45Deg,
+    animWalk90Deg,
+    animRunGround,
+    animRun45Deg,
+    animRun90Deg,
+    animSkid,
+    animRoll,
+    animSpindash,
+    animBalance,
+    animHurt,
+    animDie,
+    animDrown,
+    animBreathe,
+    animPush,
+    animFanSpin,
+    animPoleHang,
+};
 
 Map* lvlBG;
 Map* lvlFG;
-unsigned char level[2] = {0,0};
-unsigned char lives = 3;
-unsigned short rings = 0;
-unsigned char timeTimer = 0;
-unsigned char gameTimer[3] = {0,0,0};
-unsigned long score = 0;
-unsigned short player_x = 0;
-unsigned short player_y = 0;
-short lvlVRAMIndex;
-Sprite* player;
+u8 level[2] = {0,0};
+u8 lives = 3;
+u16 rings = 0;
+u8 timeTimer = 0;
+u8 gameTimer[3] = {0,0,0};
+u32 score = 0;
+s16 lvlVRAMIndex;
 bool startGameTimer = true;
 bool paused = false;
+PlayerMData playerObj;
+const AnimMData playerAnimData[23] = 
+{
+    // {index, frameAmount, frameTime}
+    {0,1,1},{1,2,5},{2,12,30},{3,1,1},{4,1,1},{5,1,1},{6,8,5},{7,8,5},{8,8,5},{9,4,5},{10,4,5},{11,4,5},{12,2,5},{13,7,1},{14,9,1},{15,2,30},{16,2,15},{17,1,1},{18,1,1},{19,1,1},{20,4,5},{21,5,5},{22,2,1}
+};
+u8 frameTimer;
+u8 animIndex;
+u8 frameIndex;
 
-static void spawnPlayer()
+static void manageAnim()
+{
+    if (frameTimer < playerAnimData[animIndex].frameTime)
+    {
+        frameTimer++;
+    }
+    else
+    {
+        frameTimer = 0;
+        if (frameIndex < playerAnimData[animIndex].frameAmount - 1)
+        {
+            frameIndex++;
+        }
+        else
+        {
+            frameIndex = 0;
+        }
+        SPR_setAnimAndFrame(playerObj.sprite,animIndex,frameIndex);
+    }
+    
+}
+
+static Vect2D_s32 f32VectToIntVect(Vect2D_f32 vector)
+{
+    s32 cvtX = fix32ToInt(vector.x);
+    s32 cvtY = fix32ToInt(vector.y);
+    Vect2D_s32 cvtVector = {cvtX, cvtY};
+    return cvtVector;
+}
+
+static void spawnplayer()
 {
     u16 basetile = TILE_ATTR(PAL3,FALSE,FALSE,FALSE);
-    player = SPR_addSprite(&plrSonic,player_x,player_y,basetile);
+    Vect2D_s32 vector = f32VectToIntVect(playerObj.positions);
+    playerObj.sprite = SPR_addSprite(&plrSonic,vector.x,vector.y,basetile);
+    SPR_setVRAMTileIndex(playerObj.sprite,lvlVRAMIndex);
+    lvlVRAMIndex += plrSonic.maxNumTile;
 }
 
 static void setLevelPalette(const u16* palette)
@@ -90,6 +154,41 @@ static void joyEvent_Game(u16 joy, u16 changed, u16 state)
         MDS_pause(MDS_BGM,paused);
         JOY_setEventHandler(joyEvent_Paused);
     }
+    bool isLeftPressed = state & BUTTON_LEFT;
+    bool isRightPressed = state & BUTTON_RIGHT;
+    if (isLeftPressed)
+    {
+        animIndex = animWalkGround;
+        SPR_setHFlip(playerObj.sprite,true);
+    }
+    else if (isRightPressed)
+    {
+        animIndex = animWalkGround;
+        SPR_setHFlip(playerObj.sprite,false);
+    }
+    else
+    {
+        animIndex = animIdle;
+    }
+    bool isUpPressed = state & BUTTON_UP;
+    bool isDownPressed = state & BUTTON_DOWN;
+    if (isUpPressed)
+    {
+        animIndex = animLookUp;
+    }
+    else if (isDownPressed)
+    {
+        animIndex = animCrouch;
+        if (changed & BUTTON_A)
+        {
+            animIndex = animSpindash;
+            return;
+        }
+    }
+    else
+    {
+        return;
+    }
 }
 
 static void paletteCycle_GHZ()
@@ -104,12 +203,12 @@ static void paletteCycle_GHZ()
 
 static void updateHUD()
 {
-    char scoreStr[11] = "0000000000";
-    char ringsStr[6] = "00000";
-    char secondStr[3] = "00";
-    char minuteStr[2] = "0";
-    char livesStr[4] = "000";
-    char framesStr[3] = "00";
+    char scoreStr[11];
+    char ringsStr[6];
+    char secondStr[3];
+    char minuteStr[2];
+    char livesStr[4];
+    char framesStr[3];
     uintToStr(score,scoreStr,10);
     VDP_drawText(scoreStr,6,0);
     uintToStr(rings,ringsStr,5);
@@ -179,7 +278,7 @@ static void initLevel()
             break;
         }
     }
-    spawnPlayer();
+    spawnplayer();
     spawnHUD();
     JOY_setEventHandler(joyEvent_Game);
     while (1)
@@ -191,6 +290,7 @@ static void initLevel()
             SPR_update();
             updateHUD();
             updateTimer();
+            manageAnim();
             if (level[0] == 0)
             {
                 paletteCycle_GHZ();
@@ -201,7 +301,7 @@ static void initLevel()
 
 void gameInit()
 {
-    u8 timer = 197;
+    s32 timer = secToFrames(FIX32(2.96));
     VDP_setScreenHeight240();
     VDP_clearPlane(BG_A,TRUE);
     VDP_clearPlane(BG_B,TRUE);
@@ -218,12 +318,10 @@ void gameInit()
     {
     case 0:
     {
-        short indBG = TILE_USER_INDEX;
-        short indFG = indBG;
+        s16 indBG = TILE_USER_INDEX;
         VDP_loadTileSet(&ghzBG_TS,indBG,DMA);
         lvlVRAMIndex = ghzBG_TS.numTile;
-        unsigned short basetileBG = TILE_ATTR_FULL(PAL0,FALSE,FALSE,FALSE,indBG);
-        unsigned short basetileFG = TILE_ATTR_FULL(PAL0,FALSE,FALSE,FALSE,indFG);
+        u16 basetileBG = TILE_ATTR_FULL(PAL0,FALSE,FALSE,FALSE,indBG);
         cycleTimer = MEM_alloc(sizeof(fix16));
         lvlBG = MAP_create(&ghzBG_MAP,BG_B,basetileBG);
         MAP_scrollTo(lvlBG,0,0);
@@ -233,10 +331,22 @@ void gameInit()
         {
         case 0:
         {
+            s16 indFG = indBG + lvlVRAMIndex;
+            u16 basetileFG = TILE_ATTR_FULL(PAL3,FALSE,FALSE,FALSE,indFG);
+            playerObj.positions.x = FIX32(0);
+            playerObj.positions.y = FIX32(64);
+            VDP_loadTileSet(&ghzFG_Act1TS,indFG,DMA);
+            lvlFG = MAP_create(&ghzFG_Act1Map,BG_A,basetileFG);
+            MAP_scrollTo(lvlFG,0,0);
+            MEM_free(lvlFG);
+            lvlVRAMIndex = indFG + ghzFG_Act1TS.numTile;
             break;
         }
         default:
+        {
+            killExec(lvlOutOfRange);
             break;
+        }
         }
         break;
     }    
