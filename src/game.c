@@ -30,10 +30,10 @@ enum playerAnimIndexes
 Map* lvlBG;
 Map* lvlFG;
 u8 level[2] = {0,0};
-u8 lives = 3;
+u8 lives = 1;
 u16 rings = 0;
 u8 timeTimer = 0;
-u8 gameTimer[3] = {0,0,0};
+u8 gameTimer[3] = {8,50,0};
 u32 score = 0;
 s16 lvlVRAMIndex;
 bool startGameTimer = true;
@@ -42,11 +42,16 @@ PlayerMData playerObj;
 const AnimMData playerAnimData[23] = 
 {
     // {index, frameAmount, frameTime}
-    {0,1,1},{1,2,5},{2,12,30},{3,1,1},{4,1,1},{5,1,1},{6,8,5},{7,8,5},{8,8,5},{9,4,5},{10,4,5},{11,4,5},{12,2,5},{13,7,1},{14,9,1},{15,2,30},{16,2,15},{17,1,1},{18,1,1},{19,1,1},{20,4,5},{21,5,5},{22,2,1}
+    {0,1,1},{1,2,5},{2,12,30},{3,1,1},{4,1,1},{5,1,1},{6,8,5},{7,8,5},{8,8,5},{9,4,5},{10,4,5},{11,4,5},{12,2,5},{13,7,0},{14,10,0},{15,2,30},{16,2,15},{17,1,1},{18,1,1},{19,1,1},{20,4,5},{21,5,5},{22,2,1}
 };
 u8 frameTimer;
 u8 animIndex;
 u8 frameIndex;
+u8 flashTimer;
+Sprite* titleCardText;
+Sprite* titleCardEmblem;
+Sprite* titleCardZone;
+u16 cardXs[] = {100,0,0,0,0,0,0};
 
 static void manageAnim()
 {
@@ -264,6 +269,59 @@ static void updateTimer()
     }
 }
 
+static void flashHUD()
+{
+    u16 basetileNormal = TILE_ATTR(PAL3,TRUE,FALSE,FALSE);
+    u16 basetileFlash = TILE_ATTR(PAL0,TRUE,FALSE,FALSE);
+    u8 flashDelay = 30;
+    flashTimer++;
+    if (gameTimer[0] == 9)
+    {
+        if (flashTimer == flashDelay)
+        {
+            VDP_drawTextEx(WINDOW,"TIME",basetileFlash,0,1,DMA);
+        }
+        else if (flashTimer == flashDelay << 1)
+        {
+            VDP_drawTextEx(WINDOW,"TIME",basetileNormal,0,1,DMA);
+        }
+    }
+    if (rings == 0)
+    {
+        if (flashTimer == flashDelay)
+        {
+            VDP_drawTextEx(WINDOW,"RINGS",basetileFlash,0,2,DMA);
+        }
+        else if (flashTimer == flashDelay << 1)
+        {
+            VDP_drawTextEx(WINDOW,"RINGS",basetileNormal,0,2,DMA);
+        }
+    }
+    else
+    {
+        VDP_drawTextEx(WINDOW,"RINGS",basetileNormal,0,2,DMA);
+    }
+    if (lives <= 1)
+    {
+        if (flashTimer == flashDelay)
+        {
+            VDP_drawTextEx(WINDOW,"LIVES",basetileFlash,0,3,DMA);
+        }
+        else if (flashTimer == flashDelay << 1)
+        {
+            VDP_drawTextEx(WINDOW,"LIVES",basetileNormal,0,3,DMA);
+        }
+    }
+    else
+    {
+        VDP_drawTextEx(WINDOW,"LIVES",basetileNormal,0,3,DMA);
+    }
+    if (flashTimer == flashDelay << 1)
+    {
+        flashTimer = 0;
+    }
+}
+
 static void initLevel()
 {
     switch (level[0])
@@ -278,6 +336,9 @@ static void initLevel()
             break;
         }
     }
+    SPR_releaseSprite(titleCardEmblem);
+    SPR_releaseSprite(titleCardText);
+    SPR_releaseSprite(titleCardZone);
     spawnplayer();
     spawnHUD();
     JOY_setEventHandler(joyEvent_Game);
@@ -291,12 +352,20 @@ static void initLevel()
             updateHUD();
             updateTimer();
             manageAnim();
+            flashHUD();
             if (level[0] == 0)
             {
                 paletteCycle_GHZ();
             }
         }
     }
+}
+
+static void cardUpdate()
+{
+    SPR_setPosition(titleCardText,cardXs[level[0]],80);
+    SPR_setPosition(titleCardEmblem,cardXs[level[0]]+72,76);
+    SPR_setPosition(titleCardZone,cardXs[level[0]],96);
 }
 
 void gameInit()
@@ -309,19 +378,32 @@ void gameInit()
     VDP_setWindowVPos(FALSE,4);
     VDP_setTextPalette(PAL3);
 	VDP_setTextPlane(WINDOW);
+    VDP_setTextPriority(TRUE);
     VDP_loadFont(&gameFont,DMA);
     SYS_setVIntCallback(NULL);
     PAL_interruptFade();
     PAL_setPalette(PAL3,sonicPalette,DMA);
     JOY_setEventHandler(NULL);
+    s16 indBG = TILE_USER_INDEX;
+    u16 basetileCards = TILE_ATTR(PAL3,TRUE,FALSE,FALSE);
+    titleCardEmblem = SPR_addSprite(&titleDash,376,76,basetileCards);
+    SPR_setVRAMTileIndex(titleCardEmblem,indBG);
+    lvlVRAMIndex = titleDash.maxNumTile + indBG;
+    titleCardZone = SPR_addSprite(&titleZone,384,92,basetileCards);
+    SPR_setVRAMTileIndex(titleCardZone,lvlVRAMIndex);
+    lvlVRAMIndex += titleZone.maxNumTile;
+    titleCardText = SPR_addSprite(&titleCards,464,76,basetileCards);
+    SPR_setVRAMTileIndex(titleCardText,lvlVRAMIndex);
+    lvlVRAMIndex += titleCards.maxNumTile;
+    SPR_setAnim(titleCardText,level[0]);
+    SPR_setDepth(titleCardText,titleCardEmblem->depth-1);
     switch (level[0])
     {
     case 0:
     {
-        s16 indBG = TILE_USER_INDEX;
-        VDP_loadTileSet(&ghzBG_TS,indBG,DMA);
-        lvlVRAMIndex = ghzBG_TS.numTile;
-        u16 basetileBG = TILE_ATTR_FULL(PAL0,FALSE,FALSE,FALSE,indBG);
+        VDP_loadTileSet(&ghzBG_TS,lvlVRAMIndex,DMA);
+        u16 basetileBG = TILE_ATTR_FULL(PAL0,FALSE,FALSE,FALSE,lvlVRAMIndex);
+        lvlVRAMIndex += ghzBG_TS.numTile;
         cycleTimer = MEM_alloc(sizeof(fix16));
         lvlBG = MAP_create(&ghzBG_MAP,BG_B,basetileBG);
         MAP_scrollTo(lvlBG,0,0);
@@ -331,7 +413,7 @@ void gameInit()
         {
         case 0:
         {
-            s16 indFG = indBG + lvlVRAMIndex;
+            s16 indFG = lvlVRAMIndex;
             u16 basetileFG = TILE_ATTR_FULL(PAL3,FALSE,FALSE,FALSE,indFG);
             playerObj.positions.x = FIX32(0);
             playerObj.positions.y = FIX32(64);
@@ -361,6 +443,7 @@ void gameInit()
         timer--;
         MDS_update();
         SPR_update();
+        cardUpdate();
         SYS_doVBlankProcess();
         if (timer == 0)
         {

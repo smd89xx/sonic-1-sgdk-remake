@@ -3,3 +3,6 @@ SPRITE spriteHider "spr/cena.png" 16 10 BEST 0
 SPRITE pressStartText "spr/startText.png" 18 1 BEST 0
 SPRITE plrSonic "spr/plrSonic.png" 8 8 FAST 10
 SPRITE lsHand "spr/hand.png" 1 1 BEST 0
+SPRITE titleCards "spr/serif.png" 18 2 BEST 0
+SPRITE titleZone "spr/zone.png" 8 2 BEST 0
+SPRITE titleDash "spr/cardDash.png" 7 7 BEST 0

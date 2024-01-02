@@ -124,7 +124,7 @@ void title()
 	MEM_free(lvlBG);
 	MAP_scrollTo(lvlBG,0,0);
 	VDP_drawText("}SEGA 1991",29,25+yOffset);
-	VDP_drawText("}THEWINDOWSPRO98 2023",18,26+yOffset);
+	VDP_drawText("}THEWINDOWSPRO98 2023-2024",13,26+yOffset);
 	scroll = MEM_alloc(sizeof(short));
 	cycleTimer = MEM_alloc(sizeof(fix16));
 	startTxtTimer = MEM_alloc(sizeof(char));

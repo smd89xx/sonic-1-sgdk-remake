@@ -6,5 +6,8 @@ extern const SpriteDefinition spriteHider;
 extern const SpriteDefinition pressStartText;
 extern const SpriteDefinition plrSonic;
 extern const SpriteDefinition lsHand;
+extern const SpriteDefinition titleCards;
+extern const SpriteDefinition titleZone;
+extern const SpriteDefinition titleDash;
 
 #endif // _RES_SPR_H_
