@@ -6,3 +6,5 @@ SPRITE lsHand "spr/hand.png" 1 1 BEST 0
 SPRITE titleCards "spr/serif.png" 18 2 BEST 0
 SPRITE titleZone "spr/zone.png" 8 2 BEST 0
 SPRITE titleDash "spr/cardDash.png" 7 7 BEST 0
+SPRITE shield "spr/shield.png" 6 6 FAST 1
+SPRITE actText "spr/actText.png" 5 3 BEST 0

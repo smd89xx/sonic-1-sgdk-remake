@@ -2,7 +2,7 @@
 
 #define NUM_OPTS_LS 27
 
-const u8 sfxStart = 5;
+const u8 sfxStart = 6;
 const u8 lsX = 3;
 const u8 lsY = 4;
 const Option lsOptions[NUM_OPTS_LS] =

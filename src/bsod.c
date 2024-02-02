@@ -28,6 +28,9 @@ void killExec(u32 stopcode)
     VDP_clearPlane(BG_B,TRUE);
     VDP_setWindowVPos(FALSE,0);
     VDP_setScreenHeight240();
+    VDP_setScrollingMode(HSCROLL_PLANE,VSCROLL_PLANE);
+    VDP_setHorizontalScroll(BG_A,0);
+    VDP_setVerticalScroll(BG_A,0);
     SPR_end();
     PAL_interruptFade();
     u16 basetile = TILE_ATTR(PAL1,FALSE,FALSE,FALSE);
@@ -59,9 +62,11 @@ void killExec(u32 stopcode)
     PAL_setColor(0,0x0800);
     PAL_setPalette(PAL1,sonicPalette,DMA);
     stopcode_public = &stopcode;
+    MDS_request(MDS_BGM,BGM_MUS_SOR2GAMEOVER);
     JOY_setEventHandler(joyEvent_BSOD);
     while (1)
     {
+        MDS_update();
         SYS_doVBlankProcess();
     }
 }

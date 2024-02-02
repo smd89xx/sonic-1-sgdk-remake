@@ -27,3 +27,20 @@ typedef struct
 	fix32 maxSpeed;
 	fix32 jumpSpeed;
 }PlayerMData;
+
+typedef struct
+{
+	/// @brief 
+	u32 left;
+	u32 width;
+	u32 top;
+	u32 height;
+	u8 type;
+}CollisionMData;
+
+typedef struct
+{
+	u8 minutes;
+	u8 seconds;
+	u8 frames;
+}Timer;

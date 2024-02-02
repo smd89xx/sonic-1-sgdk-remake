@@ -9,5 +9,7 @@ extern const SpriteDefinition lsHand;
 extern const SpriteDefinition titleCards;
 extern const SpriteDefinition titleZone;
 extern const SpriteDefinition titleDash;
+extern const SpriteDefinition shield;
+extern const SpriteDefinition actText;
 
 #endif // _RES_SPR_H_

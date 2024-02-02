@@ -15,4 +15,5 @@
 #include "lvlSelect.h"
 #include "title.h"
 #include "main.h"
+#include "collision.h"
 #include "game.h"
